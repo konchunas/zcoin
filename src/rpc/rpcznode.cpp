@@ -581,6 +581,63 @@ bool DecodeHexVecMnb(std::vector <CZnodeBroadcast> &vecMnb, std::string strHexMn
     return true;
 }
 
+UniValue znodecoldcreate(const UniValue &params, bool fHelp) {
+
+    if (fHelp)
+        throw std::runtime_error(
+                "znodecoldcreate \"command\"...\n"
+                        "Set of commands to create znode broadcast totally offline\n"
+                        "\nArguments:\n"
+                        "1. \"command\"        (string or set of strings, required) The command to execute\n"
+        );
+
+    if (fImporting || fReindex)
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Wait for reindex and/or import to finish");
+
+    {
+        LOCK(pwalletMain->cs_wallet);
+        EnsureWalletIsUnlocked();
+    }
+
+
+    UniValue statusObj(UniValue::VOBJ);
+
+    auto ip = params[0].get_str();
+    auto node_key = params[1].get_str();
+    auto address_str = params[2].get_str();
+    auto txin = params[3].get_str();
+    auto output_index = params[4].get_str();
+    auto best_block = params[5].get_str();
+
+    CBitcoinAddress address;
+    if (!address.SetString(address_str))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+    CKeyID keyID;
+    if (!address.GetKeyID(keyID))
+        throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to a key");
+    CKey vchSecret;
+    if (!pwalletMain->GetKey(keyID, vchSecret))
+        throw JSONRPCError(RPC_WALLET_ERROR, "Private key for address " + address_str + " is not known");
+
+    std::string strError;
+    CZnodeBroadcast mnb;
+
+    bool fResult = CZnodeBroadcast::ColdCreate(ip, node_key,
+                                                txin, output_index, best_block, vchSecret, strError, mnb);
+
+    statusObj.push_back(Pair("result", fResult ? "successful" : "failed"));
+    if (fResult) {
+        // vecMnb.push_back(mnb);
+        CDataStream ssMnb(SER_NETWORK, PROTOCOL_VERSION);
+        ssMnb << mnb;
+        statusObj.push_back(Pair("hex", HexStr(ssMnb)));
+    } else {
+        statusObj.push_back(Pair("errorMessage", strError));
+    }
+
+    return statusObj;
+}
+
 UniValue znodebroadcast(const UniValue &params, bool fHelp) {
     std::string strCommand;
     if (params.size() >= 1)

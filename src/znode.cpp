@@ -531,6 +531,71 @@ bool CZnodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollateralAdd
     return true;
 }
 
+bool CZnodeBroadcast::ColdCreate(std::string strService, std::string strKeyZnode, std::string strTxHash, std::string strOutputIndex, std::string best_block, CKey collateralKey, std::string &strErrorRet, CZnodeBroadcast &mnbRet) {
+    LogPrintf("CZnodeBroadcast::ColdCreate\n");
+    CPubKey pubKeyZnodeNew;
+    CKey keyZnodeNew;
+
+    if (!darkSendSigner.GetKeysFromSecret(strKeyZnode, keyZnodeNew, pubKeyZnodeNew)) {
+        strErrorRet = strprintf("Invalid znode key %s", strKeyZnode);
+        LogPrintf("CZnodeBroadcast::ColdCreate -- %s\n", strErrorRet);
+        return false;
+    }
+
+    auto pubKeyCollateral = collateralKey.GetPubKey();
+
+    CService service = CService(strService);
+    int mainnetDefaultPort = Params(CBaseChainParams::MAIN).GetDefaultPort();
+    if (Params().NetworkIDString() == CBaseChainParams::MAIN) {
+        if (service.GetPort() != mainnetDefaultPort) {
+            strErrorRet = strprintf("Invalid port %u for znode %s, only %d is supported on mainnet.", service.GetPort(), strService, mainnetDefaultPort);
+            LogPrintf("CZnodeBroadcast::ColdCreate -- %s\n", strErrorRet);
+            return false;
+        }
+    } else if (service.GetPort() == mainnetDefaultPort) {
+        strErrorRet = strprintf("Invalid port %u for znode %s, %d is the only supported on mainnet.", service.GetPort(), strService, mainnetDefaultPort);
+        LogPrintf("CZnodeBroadcast::ColdCreate -- %s\n", strErrorRet);
+        return false;
+    }
+
+    //raw ping initialization
+    CZnodePing ping;
+    ping.blockHash = uint256S(best_block);
+    auto hash_txin = uint256S(strTxHash);
+    auto out_index = 1;
+    auto prevout = COutPoint(hash_txin, out_index);
+    auto txin = CTxIn(prevout);
+    ping.vin = txin;
+    ping.sigTime = GetAdjustedTime();
+    ping.vchSig = std::vector < unsigned char > ();
+
+    if (!ping.Sign(keyZnodeNew, pubKeyZnodeNew)) {
+        strErrorRet = strprintf("Failed to sign ping, znode=%s", txin.prevout.ToStringShort());
+        LogPrintf("CZnodeBroadcast::Create -- %s\n", strErrorRet);
+        mnbRet = CZnodeBroadcast();
+        return false;
+    }
+
+    mnbRet = CZnodeBroadcast(service, txin, pubKeyCollateral, pubKeyZnodeNew, PROTOCOL_VERSION);
+
+    if (!mnbRet.IsValidNetAddr()) {
+        strErrorRet = strprintf("Invalid IP address, znode=%s", txin.prevout.ToStringShort());
+        LogPrintf("CZnodeBroadcast::Create -- %s\n", strErrorRet);
+        mnbRet = CZnodeBroadcast();
+        return false;
+    }
+
+    mnbRet.lastPing = ping;
+    if (!mnbRet.Sign(collateralKey)) {
+        strErrorRet = strprintf("Failed to sign broadcast, znode=%s", txin.prevout.ToStringShort());
+        LogPrintf("CZnodeBroadcast::Create -- %s\n", strErrorRet);
+        mnbRet = CZnodeBroadcast();
+        return false;
+    }
+
+    return true;
+}
+
 bool CZnodeBroadcast::SimpleCheck(int &nDos) {
     nDos = 0;
 

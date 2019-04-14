@@ -282,6 +282,7 @@ static const CRPCCommand vRPCCommands[] =
     { "zcoin",               "znsync",                &znsync,                 true  },
     { "zcoin",               "znodelist",             &znodelist,              true  },
     { "zcoin",               "znodebroadcast",        &znodebroadcast,         true  },
+    { "zcoin",               "znodecoldcreate",       &znodecoldcreate,         true  },
     { "zcoin",               "getpoolinfo",           &getpoolinfo,            true  },
 };
 

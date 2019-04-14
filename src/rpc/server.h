@@ -201,6 +201,7 @@ extern UniValue spork(const UniValue& params, bool fHelp);
 extern UniValue znode(const UniValue& params, bool fHelp);
 extern UniValue znodelist(const UniValue& params, bool fHelp);
 extern UniValue znodebroadcast(const UniValue& params, bool fHelp);
+extern UniValue znodecoldcreate(const UniValue& params, bool fHelp);
 extern UniValue znsync(const UniValue& params, bool fHelp);
 
 extern void EnsureWalletIsUnlocked();
