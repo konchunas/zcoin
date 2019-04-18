@@ -531,7 +531,7 @@ bool CZnodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollateralAdd
     return true;
 }
 
-bool CZnodeBroadcast::ColdCreate(std::string strService, std::string strKeyZnode, std::string strTxHash, std::string strOutputIndex, std::string best_block, CKey collateralKey, std::string &strErrorRet, CZnodeBroadcast &mnbRet) {
+bool CZnodeBroadcast::ColdCreate(std::string strService, std::string strKeyZnode, std::string strTxHash, int outputIndex, std::string best_block, CKey collateralKey, std::string &strErrorRet, CZnodeBroadcast &mnbRet) {
     LogPrintf("CZnodeBroadcast::ColdCreate\n");
     CPubKey pubKeyZnodeNew;
     CKey keyZnodeNew;
@@ -562,8 +562,7 @@ bool CZnodeBroadcast::ColdCreate(std::string strService, std::string strKeyZnode
     CZnodePing ping;
     ping.blockHash = uint256S(best_block);
     auto hash_txin = uint256S(strTxHash);
-    auto out_index = 1;
-    auto prevout = COutPoint(hash_txin, out_index);
+    auto prevout = COutPoint(hash_txin, outputIndex);
     auto txin = CTxIn(prevout);
     ping.vin = txin;
     ping.sigTime = GetAdjustedTime();

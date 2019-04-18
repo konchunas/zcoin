@@ -367,7 +367,7 @@ public:
     /// Create Znode broadcast, needs to be relayed manually after that
     static bool Create(CTxIn vin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyZnodeNew, CPubKey pubKeyZnodeNew, std::string &strErrorRet, CZnodeBroadcast &mnbRet);
     static bool Create(std::string strService, std::string strKey, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CZnodeBroadcast &mnbRet, bool fOffline = false);
-    static bool ColdCreate(std::string strService, std::string strKeyZnode, std::string strTxHash, std::string strOutputIndex, std::string best_block, CKey collateralKey, std::string &strErrorRet, CZnodeBroadcast &mnbRet);
+    static bool ColdCreate(std::string strService, std::string strKeyZnode, std::string strTxHash, int outputIndex, std::string best_block, CKey collateralKey, std::string &strErrorRet, CZnodeBroadcast &mnbRet);
 
     bool SimpleCheck(int& nDos);
     bool Update(CZnode* pmn, int& nDos);
